@@ -17,6 +17,9 @@ vector<Vector3> g_vertices;
 vector<int> g_indices;
 Matrix44 g_matWorld;
 Matrix44 g_matLocal;
+Matrix44 g_matProjection;
+Matrix44 g_matView;
+Matrix44 g_matViewPort;
 bool g_WireFrame = false;
 
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -36,30 +39,103 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	LoadString(hInstance, IDC_SOFTWARERENDERER, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
+	//                   Y    Z
+	//                   |   /
+	//                   | /
+	//    -----------------------> X
+
 	// vertices1
-	//       (-50,-50)  ----------------- (+50, -50)
+	//       (-50,-50, +50)  ----------------- (+50, -50, +50)
 	//       |                                                       |
 	//       |                         +                           |
 	//       |                                                       |
-	//       (-50,+50)  ----------------- (+50, +50)
-	const float w = 50.f;
-	g_vertices.push_back( Vector3(-w,-w,1) );
-	g_vertices.push_back( Vector3(w,-w,1) );
-	g_vertices.push_back( Vector3(w,w,1) );
-	g_vertices.push_back( Vector3(-w,w,1) );
+	//       (-50,+50, +50)  ----------------- (+50, +50, +50)
+	//
+	//       (-50,-50, -50)  ----------------- (+50, -50, -50)
+	//       |                                                       |
+	//       |                         +                           |
+	//       |                                                       |
+	//       (-50,+50, -50)  ----------------- (+50, +50, -50)
 
+	const float w = 10.f;
+	g_vertices.push_back( Vector3(-w,-w,w) );
+	g_vertices.push_back( Vector3(w,-w,w) );
+	g_vertices.push_back( Vector3(w,w,w) );
+	g_vertices.push_back( Vector3(-w,w,w) );
+	g_vertices.push_back( Vector3(-w,-w,-w) );
+	g_vertices.push_back( Vector3(w,-w,-w) );
+	g_vertices.push_back( Vector3(w,w,-w) );
+	g_vertices.push_back( Vector3(-w,w,-w) );
+
+	// top
 	g_indices.push_back(0);
 	g_indices.push_back(3);
 	g_indices.push_back(2);
-
 	g_indices.push_back(0);
 	g_indices.push_back(2);
 	g_indices.push_back(1);
+	// front
+	g_indices.push_back(3);
+	g_indices.push_back(7);
+	g_indices.push_back(2);
+	g_indices.push_back(3);
+	g_indices.push_back(6);
+	g_indices.push_back(2);
+	// back
+	g_indices.push_back(1);
+	g_indices.push_back(5);
+	g_indices.push_back(4);
+	g_indices.push_back(1);
+	g_indices.push_back(4);
+	g_indices.push_back(0);
+	// left
+	g_indices.push_back(3);
+	g_indices.push_back(0);
+	g_indices.push_back(4);
+	g_indices.push_back(7);
+	g_indices.push_back(3);
+	g_indices.push_back(4);
+	// right
+	g_indices.push_back(2);
+	g_indices.push_back(6);
+	g_indices.push_back(5);
+	g_indices.push_back(2);
+	g_indices.push_back(5);
+	g_indices.push_back(1);
+	// bottom
+	g_indices.push_back(7);
+	g_indices.push_back(4);
+	g_indices.push_back(6);
+	g_indices.push_back(4);
+	g_indices.push_back(5);
+	g_indices.push_back(6);
+
 
 	g_matWorld.SetIdentity();
 	g_matWorld.Translate(Vector3(150,200,0));
 	g_matLocal.SetIdentity();
 
+
+	g_matView.SetIdentity();
+	Vector3 orgPos(0,100,-100);
+	Vector3 lookAtPos(0,0,0);
+	Vector3 dir = lookAtPos - orgPos;
+	dir.Normalize();
+	//g_matView.SetView(orgPos, dir, Vector3(0,1,0));
+
+
+	g_matProjection.SetIdentity();
+	g_matProjection.SetProjection( MATH_PI / 4.f, 1.0f, 1.0f, 500.0f );
+
+	g_matViewPort.SetIdentity();
+	const int width = 800;
+	const int height = 600;
+	g_matViewPort._11 = width/2;
+	g_matViewPort._22 = -height/2;
+	g_matViewPort._33 = 0;
+	g_matViewPort._41 = width/2;
+	g_matViewPort._42 = height/2;
+	g_matViewPort._43 = 0;
 
 	if (!InitInstance (hInstance, nCmdShow))
 	{
@@ -84,7 +160,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 
 		const int curT = GetTickCount();
 		const int elapseT = curT - oldT;
-		if (elapseT > 30)
+		if (elapseT > 15)
 		{
 			oldT = curT;
 			MainLoop(elapseT);	
@@ -124,8 +200,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    hInst = hInstance;
 
-   hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
+   g_hWnd = hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+      0, 0, 800, 620, NULL, NULL, hInstance, NULL);
 
    if (!hWnd)
    {
@@ -290,7 +366,7 @@ void Paint(HWND hWnd, HDC hdc)
 	if (g_WireFrame)
 		RenderIndices(hdcMem, g_vertices, g_indices, g_matLocal * g_matWorld);
 	else
-		RenderWire(hdcMem, g_vertices, g_indices, g_matLocal * g_matWorld);
+		RenderWire(hdcMem, g_vertices, g_indices, g_matLocal * g_matWorld * g_matView * g_matProjection * g_matViewPort);
 
 	BitBlt(hdc, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, hdcMem, 0, 0, SRCCOPY);
 	SelectObject(hdcMem, hbmOld);
