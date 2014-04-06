@@ -48,6 +48,15 @@ Edge::Edge(const Color &color1, int x1, int y1, const Color &color2, int x2, int
 		X2 = x1;
 		Y2 = y1;
 	}
+
+	//X1 = max(0, X1);
+	//X1 = min(X1, 800);
+	//X2 = max(0, X2);
+	//X2 = min(X2, 800);
+	//Y1 = max(0, Y1);
+	//Y1 = min(Y1, 600);
+	//Y2 = max(0, Y2);
+	//Y2 = min(Y2, 600);
 }
 
 
@@ -64,6 +73,11 @@ Span::Span(const Color &color1, int x1, const Color &color2, int x2)
 		Color2 = color1;
 		X2 = x1;
 	}
+
+	//X1 = max(0, X1);
+	//X1 = min(X1, 800);
+	//X2 = max(0, X2);
+	//X2 = min(X2, 800);
 }
 
 Color::Color(float r, float g, float b, float a) : R(r), G(g), B(b), A(a)
@@ -215,6 +229,9 @@ void Rasterizer::DrawLine(HDC hdc, const Color &color1, float x1, float y1,
 			xmax = x1;
 		}
 
+		xmin = max(0, xmin);
+		xmax = min(xmax, 800);
+
 		// draw line in terms of y slope
 		float slope = ydiff / xdiff;
 		for(float x = xmin; x <= xmax; x += 1.0f) {
@@ -236,6 +253,9 @@ void Rasterizer::DrawLine(HDC hdc, const Color &color1, float x1, float y1,
 			ymin = y2;
 			ymax = y1;
 		}
+
+		ymin = max(0, ymin);
+		ymax = min(ymax, 600);
 
 		// draw line in terms of x slope
 		float slope = xdiff / ydiff;

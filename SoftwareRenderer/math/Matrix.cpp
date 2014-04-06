@@ -327,20 +327,21 @@ void Matrix44::SetProjection(	const float fFOV,			///<
 								const float fFarPlane		///<
 								)
 {
-	float fW = fAspect * cosf( fFOV / 2 ) / sinf( fFOV / 2 );
-	float fH = 1.0F    * cosf( fFOV / 2 ) / sinf( fFOV / 2 );
+	float fW = fAspect * cosf( fFOV / 2.f ) / sinf( fFOV / 2.f );
+	float fH = 1.0f    * cosf( fFOV / 2.f ) / sinf( fFOV / 2.f );
 	float fQ = fFarPlane / ( fFarPlane - fNearPlane );
 
-	_12 = _13 = _14 = 0.0F;
-	_21 = _23 = _24 = 0.0F;
-	_31 = _32 = 0.0F;
-	_41 = _42 = 0.0F;
+	_12 = _13 = _14 = 0.0f;
+	_21 = _23 = _24 = 0.0f;
+	_31 = _32 = 0.0f;
+	_41 = _42 = 0.0f;
 	_11 = fW;
 	_22 = fH;
 	_33 = fQ;
-	_34 = 1.0F;					// Perspective..
+	_34 = 1.0f;					// Perspective..
 	_43 = -fQ * fNearPlane;
-	_44 = 1.0F;
+	//_44 = 1.0F;
+	_44 = 0.f;
 } //Matrix44::SetProjection
 
 

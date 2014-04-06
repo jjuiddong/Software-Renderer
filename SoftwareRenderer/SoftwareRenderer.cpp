@@ -21,6 +21,9 @@ Matrix44 g_matProjection;
 Matrix44 g_matView;
 Matrix44 g_matViewPort;
 bool g_WireFrame = false;
+Vector3 g_center(300,300,0);
+Vector3 g_cameraPos(0,100,100);
+Vector3 g_cameraLookat(0,0,0);
 
 ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
@@ -57,7 +60,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	//       |                                                       |
 	//       (-50,+50, -50)  ----------------- (+50, +50, -50)
 
-	const float w = 10.f;
+	const float w = 30.f;
+	g_vertices.reserve(128);
 	g_vertices.push_back( Vector3(-w,-w,w) );
 	g_vertices.push_back( Vector3(w,-w,w) );
 	g_vertices.push_back( Vector3(w,w,w) );
@@ -112,30 +116,24 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 
 
 	g_matWorld.SetIdentity();
-	g_matWorld.Translate(Vector3(150,200,0));
+	g_matWorld.Translate(Vector3(0,0,0));
 	g_matLocal.SetIdentity();
 
-
 	g_matView.SetIdentity();
-	Vector3 orgPos(0,100,-100);
-	Vector3 lookAtPos(0,0,0);
-	Vector3 dir = lookAtPos - orgPos;
+	Vector3 dir = g_cameraLookat - g_cameraPos;
 	dir.Normalize();
-	g_matView.SetView(orgPos, dir, Vector3(0,1,0));
+	g_matView.SetView(g_cameraPos, dir, Vector3(0,1,0));
+	g_matProjection.SetProjection( MATH_PI / 4.f, 1.0f, 1.0f, 100.0f );
 
-
-	g_matProjection.SetIdentity();
-	g_matProjection.SetProjection( MATH_PI / 4.f, 1.0f, 1.0f, 500.0f );
-
+	const float width = 800.f;
+	const float height = 600.f;
 	g_matViewPort.SetIdentity();
-	const int width = 800;
-	const int height = 600;
-	//g_matViewPort._11 = width/2;
-	//g_matViewPort._22 = -height/2;
-	//g_matViewPort._33 = 0;
-	//g_matViewPort._41 = width/2;
-	//g_matViewPort._42 = height/2;
-	//g_matViewPort._43 = 0;
+	g_matViewPort._11 = width/2;
+	g_matViewPort._22 = -height/2;
+	g_matViewPort._33 = 0;
+	g_matViewPort._41 = width/2;
+	g_matViewPort._42 = height/2;
+	g_matViewPort._43 = 0;
 
 	if (!InitInstance (hInstance, nCmdShow))
 	{
@@ -243,28 +241,73 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_ERASEBKGND:
 		return 1;
+
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
 		case VK_TAB:
 			g_WireFrame = !g_WireFrame;
 			break;
-		case VK_LEFT:
+
+		case VK_UP:
+		case VK_DOWN:
 			{
 				Matrix44 mat;
-				mat.SetRotationZ(0.1f);
+				mat.SetRotationX((wParam==VK_UP)? 0.1f : -0.1f);
 				g_matLocal *= mat;
 			}
 			break;
+
+		case VK_LEFT:
 		case VK_RIGHT:
 			{
 				Matrix44 mat;
-				mat.SetRotationZ(-0.1f);
+				mat.SetRotationY((wParam==VK_LEFT)? 0.1f : -0.1f);
 				g_matLocal *= mat;
 			}
 			break;
+
+		case 'w':
+		case 'W':
+		case 's':
+		case 'S':
+			{
+				Vector3 dir = g_cameraLookat - g_cameraPos;
+				dir.Normalize();
+				const bool isForward = ('w' == wParam || 'W' == wParam);
+				g_cameraPos += dir * (isForward? 10.f : -10.f);
+				g_cameraLookat += dir * (isForward? 10.f : -10.f);
+
+				Vector3 dir2 = g_cameraLookat - g_cameraPos;
+				dir2.Normalize();
+				g_matView.SetView(g_cameraPos, dir2, Vector3(0,1,0));
+			}
+			break;
+
+		case 'a':
+		case 'A':
+		case 'd':
+		case 'D':
+			{
+				Vector3 dir = g_cameraLookat - g_cameraPos;
+				dir.Normalize();
+				Vector3 left = Vector3(0,1,0).CrossProduct(dir);
+				left.Normalize();
+				const bool isLeft = ('a' == wParam || 'A' == wParam);
+				g_cameraPos += left * (isLeft? 10.f : -10.f);
+				g_cameraLookat += left * (isLeft? 10.f : -10.f);
+
+				Vector3 dir2 = g_cameraLookat - g_cameraPos;
+				dir2.Normalize();
+				g_matView.SetView(g_cameraPos, dir2, Vector3(0,1,0));
+			}
+			break;
+
+		case VK_ESCAPE:
+			DestroyWindow(hWnd);
 		}
 		break;
+
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
@@ -282,7 +325,7 @@ void	MainLoop(int elapse_time)
 {
 	// Render
 	Render(g_hWnd);
-	::InvalidateRect(g_hWnd, NULL, TRUE);
+	//::InvalidateRect(g_hWnd, NULL, TRUE);
 }
 
 
@@ -313,6 +356,8 @@ void RenderVertices(HDC hdc, const vector<Vector3> &vertices, const Matrix44 &tm
 
 void RenderIndices(HDC hdc, const vector<Vector3> &vertices, const vector<int> &indices, const Matrix44 &tm)
 {
+	const Vector3 center = g_center;
+
 	for (unsigned int i=0; i < indices.size(); i+=3)
 	{
 		Vector3 p1 = vertices[ indices[ i]];
@@ -331,6 +376,8 @@ void RenderIndices(HDC hdc, const vector<Vector3> &vertices, const vector<int> &
 
 void RenderWire(HDC hdc, const vector<Vector3> &vertices, const vector<int> &indices, const Matrix44 &tm)
 {
+	const Vector4 center  = g_center;
+
 	for (unsigned int i=0; i < indices.size(); i+=3)
 	{
 		Vector4 p1 = vertices[ indices[ i]];
@@ -363,10 +410,11 @@ void Paint(HWND hWnd, HDC hdc)
 	FillRect(hdcMem, &rc, hbrBkGnd);
 	DeleteObject(hbrBkGnd);
 
+	Matrix44 tm = g_matLocal * g_matWorld * g_matView * g_matProjection * g_matViewPort;
 	if (g_WireFrame)
-		RenderIndices(hdcMem, g_vertices, g_indices, g_matLocal * g_matWorld);
+		RenderIndices(hdcMem, g_vertices, g_indices, tm);
 	else
-		RenderWire(hdcMem, g_vertices, g_indices, g_matLocal * g_matWorld * g_matView * g_matProjection * g_matViewPort);
+		RenderWire(hdcMem, g_vertices, g_indices, tm);
 
 	BitBlt(hdc, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, hdcMem, 0, 0, SRCCOPY);
 	SelectObject(hdcMem, hbmOld);

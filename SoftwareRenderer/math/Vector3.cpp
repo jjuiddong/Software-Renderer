@@ -1,6 +1,7 @@
 
 #include "stdafx.h"
 #include "Math.h"
+#include <float.h>
 
 
 // Global
@@ -364,9 +365,11 @@ Vector3 Vector3::Interpolate( Vector3& v, float f ) const
 //-------------------------------
 Vector3 Vector3::operator * ( const Matrix44 &m )
 {
-	float	fRHW = 1.0F / ( x * m._14 + y * m._24 + z * m._34 + m._44 );	
+	float	fRHW = 1.0F / (x * m._14 + y * m._24 + z * m._34 + m._44);
+	if (fRHW >= FLT_MAX)
+		return Vector3(0,0,0);
 	
-	Vector3	vDummy;
+	Vector3 vDummy;
 	vDummy.x = ( x * m._11 + y * m._21 + z * m._31 + m._41 ) * fRHW;
 	vDummy.y = ( x * m._12 + y * m._22 + z * m._32 + m._42 ) * fRHW;
 	vDummy.z = ( x * m._13 + y * m._23 + z * m._33 + m._43 ) * fRHW;
@@ -380,6 +383,8 @@ Vector3 Vector3::operator * ( const Matrix44 &m )
 Vector3& Vector3::operator *= ( Matrix44& m )
 {
 	float	fRHW = 1.0F / ( x * m._14 + y * m._24 + z * m._34 + m._44 );	
+	if (fRHW >= FLT_MAX)
+		return Vector3(0,0,0);
 	
 	Vector3	vDummy;
 	vDummy.x = ( x * m._11 + y * m._21 + z * m._31 + m._41 ) * fRHW;
@@ -488,6 +493,8 @@ Vector3& MultipleMatrix( const Vector3& v, const Matrix44& m, Vector3& vOut )
 	fZ = v.x * m._13 + v.y * m._23 + v.z * m._33 + m._43;
 	fW = v.x * m._14 + v.y * m._24 + v.z * m._34 + m._44;
 	float fRHW = 1.0F / fW;	
+	if (fRHW >= FLT_MAX)
+		return Vector3(0,0,0);
 
 	vOut.x = fX * fRHW;
 	vOut.y = fY * fRHW;
