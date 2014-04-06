@@ -121,7 +121,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	Vector3 lookAtPos(0,0,0);
 	Vector3 dir = lookAtPos - orgPos;
 	dir.Normalize();
-	//g_matView.SetView(orgPos, dir, Vector3(0,1,0));
+	g_matView.SetView(orgPos, dir, Vector3(0,1,0));
 
 
 	g_matProjection.SetIdentity();
@@ -130,12 +130,12 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	g_matViewPort.SetIdentity();
 	const int width = 800;
 	const int height = 600;
-	g_matViewPort._11 = width/2;
-	g_matViewPort._22 = -height/2;
-	g_matViewPort._33 = 0;
-	g_matViewPort._41 = width/2;
-	g_matViewPort._42 = height/2;
-	g_matViewPort._43 = 0;
+	//g_matViewPort._11 = width/2;
+	//g_matViewPort._22 = -height/2;
+	//g_matViewPort._33 = 0;
+	//g_matViewPort._41 = width/2;
+	//g_matViewPort._42 = height/2;
+	//g_matViewPort._43 = 0;
 
 	if (!InitInstance (hInstance, nCmdShow))
 	{
@@ -333,9 +333,9 @@ void RenderWire(HDC hdc, const vector<Vector3> &vertices, const vector<int> &ind
 {
 	for (unsigned int i=0; i < indices.size(); i+=3)
 	{
-		Vector3 p1 = vertices[ indices[ i]];
-		Vector3 p2 = vertices[ indices[ i+1]];
-		Vector3 p3 = vertices[ indices[ i+2]];
+		Vector4 p1 = vertices[ indices[ i]];
+		Vector4 p2 = vertices[ indices[ i+1]];
+		Vector4 p3 = vertices[ indices[ i+2]];
 
 		p1 = p1 * tm;
 		p2 = p2 * tm;

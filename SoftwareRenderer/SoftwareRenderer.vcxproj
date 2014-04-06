@@ -82,6 +82,7 @@
     <ClInclude Include="math\Matrix.h" />
     <ClInclude Include="math\Quaternion.h" />
     <ClInclude Include="math\Vector3.h" />
+    <ClInclude Include="math\Vector4.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SoftwareRenderer.h" />
     <ClInclude Include="stdafx.h" />
@@ -92,6 +93,7 @@
     <ClCompile Include="math\Matrix.cpp" />
     <ClCompile Include="math\Quaternion.cpp" />
     <ClCompile Include="math\Vector3.cpp" />
+    <ClCompile Include="math\Vector4.cpp" />
     <ClCompile Include="SoftwareRenderer.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

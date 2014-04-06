@@ -47,6 +47,7 @@
 // Structure
 	struct Vector2;		// 2 Axis 
 	struct Vector3;		// 3 Axis
+	struct Vector4;
 	struct Matrix44;	// 4 Row
 	struct Quaternion;	// 
 	struct Triangle;	// 
@@ -59,6 +60,7 @@
 	//#include "Vector.h"	
 	//#include "Vector2.h"
 	#include "Vector3.h"
+	#include "Vector4.h"
 	#include "Matrix.h"	
 	#include "Quaternion.h"
 	//#include "triangle.h"
