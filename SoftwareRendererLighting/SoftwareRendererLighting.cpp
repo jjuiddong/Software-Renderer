@@ -1,6 +1,6 @@
 
 #include "stdafx.h"
-#include "SoftwareRenderer.h"
+#include "SoftwareRendererLighting.h"
 #include "math/Math.h"
 #include <vector>
 #include "DrawTriangle.h"
@@ -33,14 +33,13 @@ void					MainLoop(int elapse_time);
 void					Render(HWND hWnd);
 void					Paint(HWND hWnd, HDC hdc);
 
-
-int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
+int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR  lpCmdLine, int nCmdShow)
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-	LoadString(hInstance, IDC_SOFTWARERENDERER, szWindowClass, MAX_LOADSTRING);
+	LoadString(hInstance, IDC_SOFTWARERENDERERLIGHTING, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
 	//                   Y    Z
@@ -145,13 +144,14 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	g_matViewPort._42 = height/2;
 	g_matViewPort._43 = 0;
 
+
 	if (!InitInstance (hInstance, nCmdShow))
 	{
 		return FALSE;
 	}
 
 	MSG msg;
-	HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_SOFTWARERENDERER));
+	HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_SOFTWARERENDERERLIGHTING));
 	int oldT = GetTickCount();
 	while (1)
 	{
@@ -190,17 +190,15 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= hInstance;
-	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SOFTWARERENDERER));
+	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SOFTWARERENDERERLIGHTING));
 	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
-	//wcex.lpszMenuName	= MAKEINTRESOURCE(IDC_SOFTWARERENDERER);
-	wcex.lpszMenuName = NULL;
+	wcex.lpszMenuName	= NULL;
 	wcex.lpszClassName	= szWindowClass;
 	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
 	return RegisterClassEx(&wcex);
 }
-
 
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
@@ -326,7 +324,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DestroyWindow(hWnd);
 		}
 		break;
-
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
@@ -335,6 +332,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 }
+
 
 
 /**
@@ -403,8 +401,9 @@ void RenderIndices(HDC hdc, const vector<Vector3> &vertices, const vector<int> &
 		p2 = p2 * vpv;
 		p3 = p3 * vpv;
 
+		Vector3 n1, n2, n3;
 		Rasterizer::Color color(255,0,0,1);
-		Rasterizer::DrawTriangle(hdc, color, p1.x, p1.y, color, p2.x, p2.y, color, p3.x, p3.y);
+		Rasterizer::DrawTriangle(hdc, color, p1.x, p1.y, n1, color, p2.x, p2.y, n2, color, p3.x, p3.y, n3);
 	}
 }
 

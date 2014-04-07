@@ -106,9 +106,9 @@ Color Color::operator * (float f) const
  @date 2014-04-04
 */
 void Rasterizer::DrawTriangle(HDC hdc, 
-	const Color &color1, float x1, float y1,
-	const Color &color2, float x2, float y2,
-	const Color &color3, float x3, float y3)
+	const Color &color1, float x1, float y1, const Vector3 &norm1,
+	const Color &color2, float x2, float y2, const Vector3 &norm2,
+	const Color &color3, float x3, float y3, const Vector3 &norm3)
 {
 	// create edges for the triangle
 	Edge edges[3] = {
