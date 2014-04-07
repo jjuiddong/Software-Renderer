@@ -340,9 +340,9 @@ float Vector3::DotProduct( const Vector3& v ) const
 Vector3	Vector3::CrossProduct( const Vector3& v ) const
 {
 	Vector3	vDummy;
-	vDummy.x = y * v.z - z * v.y;
-	vDummy.y = z * v.x - x * v.z;
-	vDummy.z = x * v.y - y * v.x;
+	vDummy.x = (y * v.z) - (z * v.y);
+	vDummy.y = (z * v.x) - (x * v.z);
+	vDummy.z = (x * v.y) - (y * v.x);
 
 	return vDummy;
 } //CrossProduct

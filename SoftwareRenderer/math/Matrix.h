@@ -22,23 +22,17 @@ struct Matrix44
 		}; //union
 	// ~union
 
-	// Constructor
-		Matrix44();
-		Matrix44(float	_m11, float _m12, float _m13, float _m14,
-				 float	_m21, float _m22, float _m23, float _m24,
-				 float	_m31, float _m32, float _m33, float _m34,
-				 float	_m41, float _m42, float _m43, float _m44);
+	Matrix44();
+	Matrix44(float	_m11, float _m12, float _m13, float _m14,
+				float	_m21, float _m22, float _m23, float _m24,
+				float	_m31, float _m32, float _m33, float _m34,
+				float	_m41, float _m42, float _m43, float _m44);
 
-	// ~Constructor
+	Matrix44		operator * ( const Matrix44& m ) const;
+	Matrix44		operator * ( const float f );
+	Matrix44&	operator *= ( const Matrix44& m );
+	const float& operator () ( const int nRow, const int nColumn );
 
-	// operator
-		Matrix44		operator * ( const Matrix44& m ) const;
-		Matrix44		operator * ( const float f );
-		Matrix44&	operator *= ( const Matrix44& m );
-		const float& operator () ( const int nRow, const int nColumn );
-	// ~operator
-
-	// Function
 		Matrix44	Inverse() const;
 		Quaternion GetQuaternion() const;
 
@@ -51,18 +45,15 @@ struct Matrix44
 		void		SetView( const Vector3& vPos, const Vector3& vINDir, const Vector3& vINUp );
 		void		SetProjection( const float fFOV, const float fAspect, const float fNearPlane, const float fFarPlane );
 
-		// Set World
-			void		SetWorld( const Vector3& vPos );
-			void		SetWorld( const Vector3& vPos, const Quaternion& qRot );
-			void		SetWorld( const Vector3& vPos, const Vector3& vDir, const Vector3& vUp );
-		// ~Set World
+		void		SetWorld( const Vector3& vPos );
+		void		SetWorld( const Vector3& vPos, const Quaternion& qRot );
+		void		SetWorld( const Vector3& vPos, const Vector3& vDir, const Vector3& vUp );
 
 		//void		SetPosition( const Vector3& vPos );
 		void		Translate( const Vector3& vPos );
 		void		SetScale( const Vector3& vScale);
 
 		Vector3		GetPosition();
-
 		Matrix44		GetBillboard() const;
 		Matrix44		GetBillboardX() const;
 		Matrix44		GetBillboardZ() const;
