@@ -12,42 +12,52 @@ namespace Rasterizer
 	struct Edge
 	{
 		Color Color1, Color2;
+		Vector3 N1, N2;
 		int X1, Y1, X2, Y2;
-		Edge(const Color &color1, int x1, int y1, const Color &color2, int x2, int y2);
+		Edge(const Color &color1, int x1, int y1, const Vector3 &n1, const Color &color2, int x2, int y2, const Vector3 &n2);
 	};
 
 	struct Span
 	{
 		Color Color1, Color2;
+		Vector3 N1, N2;
 		int X1, X2;
-		Span(const Color &color1, int x1, const Color &color2, int x2);
+		Span(const Color &color1, int x1, const Vector3 &n1, const Color &color2, int x2, const Vector3 &n2);
 	};
 
 
 	void DrawSpansBetweenEdges(HDC hdc, const Edge &e1, const Edge &e2);
 	void DrawSpan(HDC hdc, const Span &span, int y);
+
+
+	Vector3 g_LightDir = Vector3(0,-1,0);
+	void SetLight( const Vector3 &dir ) { g_LightDir = dir; }
 }
 
 
 using namespace Rasterizer;
 
 
-Edge::Edge(const Color &color1, int x1, int y1, const Color &color2, int x2, int y2)
+Edge::Edge(const Color &color1, int x1, int y1, const Vector3 &n1, const Color &color2, int x2, int y2, const Vector3 &n2)
 {
 	if(y1 < y2) {
 		Color1 = color1;
 		X1 = x1;
 		Y1 = y1;
+		N1 = n1;
 		Color2 = color2;
 		X2 = x2;
 		Y2 = y2;
+		N2 = n2;
 	} else {
 		Color1 = color2;
 		X1 = x2;
 		Y1 = y2;
+		N1 = n2;
 		Color2 = color1;
 		X2 = x1;
 		Y2 = y1;
+		N2 = n1;
 	}
 
 	//X1 = max(0, X1);
@@ -61,18 +71,22 @@ Edge::Edge(const Color &color1, int x1, int y1, const Color &color2, int x2, int
 }
 
 
-Span::Span(const Color &color1, int x1, const Color &color2, int x2)
+Span::Span(const Color &color1, int x1, const Vector3 &n1, const Color &color2, int x2, const Vector3 &n2)
 {
 	if(x1 < x2) {
 		Color1 = color1;
 		X1 = x1;
+		N1 = n1;
 		Color2 = color2;
 		X2 = x2;
+		N2 = n2;
 	} else {
 		Color1 = color2;
 		X1 = x2;
+		N1 = n2;
 		Color2 = color1;
 		X2 = x1;
+		N2 = n1;
 	}
 
 	//X1 = max(0, X1);
@@ -112,9 +126,9 @@ void Rasterizer::DrawTriangle(HDC hdc,
 {
 	// create edges for the triangle
 	Edge edges[3] = {
-		Edge(color1, (int)x1, (int)y1, color2, (int)x2, (int)y2),
-		Edge(color2, (int)x2, (int)y2, color3, (int)x3, (int)y3),
-		Edge(color3, (int)x3, (int)y3, color1, (int)x1, (int)y1)
+		Edge(color1, (int)x1, (int)y1, norm1, color2, (int)x2, (int)y2, norm2),
+		Edge(color2, (int)x2, (int)y2, norm2, color3, (int)x3, (int)y3, norm3),
+		Edge(color3, (int)x3, (int)y3, norm3, color1, (int)x1, (int)y1, norm1)
 	};
 
 	int maxLength = 0;
@@ -173,8 +187,10 @@ void Rasterizer::DrawSpansBetweenEdges(HDC hdc, const Edge &e1, const Edge &e2)
 		// create and draw span
 		Span span(e1.Color1 + (e1colordiff * factor1),
 			e1.X1 + (int)(e1xdiff * factor1),
+			e1.N1,
 			e2.Color1 + (e2colordiff * factor2),
-			e2.X1 + (int)(e2xdiff * factor2));
+			e2.X1 + (int)(e2xdiff * factor2),
+			e2.N1);
 		DrawSpan(hdc, span, y);
 
 		// increase factors
@@ -196,10 +212,14 @@ void Rasterizer::DrawSpan(HDC hdc, const Span &span, int y)
 	float factorStep = 1.0f / (float)xdiff;
 
 	// draw each pixel in the span
-	for(int x = span.X1; x < span.X2; x++) {
+	for (int x = span.X1; x < span.X2; x++) {
 		//SetPixel(x, y, span.Color1 + (colordiff * factor));
 		Color c = span.Color1 + (colordiff * factor);
-		COLORREF color = RGB(c.R, c.G, c.B);
+		Vector3 c0(c.R, c.G, c.B);
+		c0 = c0 * max(0, span.N1.DotProduct(-g_LightDir));
+
+		//COLORREF color = RGB(c.R, c.G, c.B);
+		COLORREF color = RGB((int)c0.x, (int)c0.y, (int)c0.z);
 		SetPixel(hdc, x, y, color);
 		factor += factorStep;
 	}

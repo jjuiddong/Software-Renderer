@@ -28,4 +28,5 @@ namespace Rasterizer
 	void DrawLine(HDC hdc, const Color &color1, float x1, float y1,
 		const Color &color2, float x2, float y2);
 
+	void SetLight( const Vector3 &dir );
 }

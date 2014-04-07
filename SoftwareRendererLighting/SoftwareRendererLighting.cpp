@@ -16,6 +16,7 @@ TCHAR szTitle[MAX_LOADSTRING];
 TCHAR szWindowClass[MAX_LOADSTRING];
 vector<Vector3> g_axises;
 vector<Vector3> g_vertices;
+vector<Vector3> g_normals;
 vector<int> g_indices;
 Matrix44 g_matWorld;
 Matrix44 g_matLocal;
@@ -32,6 +33,8 @@ LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 void					MainLoop(int elapse_time);
 void					Render(HWND hWnd);
 void					Paint(HWND hWnd, HDC hdc);
+void					ComputeNormals(const vector<Vector3> &vertices, const vector<int> &indices, vector<Vector3> &normals);
+
 
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR  lpCmdLine, int nCmdShow)
 {
@@ -70,58 +73,69 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR  lpC
 	//       (-50,-50, -50)  ----------------- (+50, -50, -50)
 
 	const float w = 30.f;
-	g_vertices.reserve(128);
-	g_vertices.push_back( Vector3(-w,w,w) );
-	g_vertices.push_back( Vector3(w,w,w) );
-	g_vertices.push_back( Vector3(w,w,-w) );
-	g_vertices.push_back( Vector3(-w,w,-w) );
-	g_vertices.push_back( Vector3(-w,-w,w) );
-	g_vertices.push_back( Vector3(w,-w,w) );
-	g_vertices.push_back( Vector3(w,-w,-w) );
-	g_vertices.push_back( Vector3(-w,-w,-w) );
+	vector<Vector3> vertices;
+	vertices.reserve(8);
+	vertices.push_back( Vector3(-w,w,w) );
+	vertices.push_back( Vector3(w,w,w) );
+	vertices.push_back( Vector3(w,w,-w) );
+	vertices.push_back( Vector3(-w,w,-w) );
+	vertices.push_back( Vector3(-w,-w,w) );
+	vertices.push_back( Vector3(w,-w,w) );
+	vertices.push_back( Vector3(w,-w,-w) );
+	vertices.push_back( Vector3(-w,-w,-w) );
 
+	g_vertices.reserve(64);
 	// top
-	g_indices.push_back(0);
-	g_indices.push_back(2);
-	g_indices.push_back(3);
-	g_indices.push_back(0);
-	g_indices.push_back(1);
-	g_indices.push_back(2);
+	g_vertices.push_back( vertices[ 0] );
+	g_vertices.push_back( vertices[ 1] );
+	g_vertices.push_back( vertices[ 2] );
+	g_vertices.push_back( vertices[ 3] );
+
 	// front
-	g_indices.push_back(3);
-	g_indices.push_back(2);
-	g_indices.push_back(7);
-	g_indices.push_back(2);
-	g_indices.push_back(6);
-	g_indices.push_back(7);
-	// back
-	g_indices.push_back(1);
-	g_indices.push_back(4);
-	g_indices.push_back(5);
-	g_indices.push_back(1);
-	g_indices.push_back(0);
-	g_indices.push_back(4);
+	g_vertices.push_back( vertices[ 3] );
+	g_vertices.push_back( vertices[ 2] );
+	g_vertices.push_back( vertices[ 6] );
+	g_vertices.push_back( vertices[ 7] );
+
+	//  back
+	g_vertices.push_back( vertices[ 0] );
+	g_vertices.push_back( vertices[ 4] );
+	g_vertices.push_back( vertices[ 5] );
+	g_vertices.push_back( vertices[ 1] );
+
 	// left
-	g_indices.push_back(3);
-	g_indices.push_back(4);
-	g_indices.push_back(0);
-	g_indices.push_back(7);
-	g_indices.push_back(4);
-	g_indices.push_back(3);
+	g_vertices.push_back( vertices[ 0] );
+	g_vertices.push_back( vertices[ 3] );
+	g_vertices.push_back( vertices[ 7] );
+	g_vertices.push_back( vertices[ 4] );
+
 	// right
-	g_indices.push_back(2);
-	g_indices.push_back(5);
-	g_indices.push_back(6);
-	g_indices.push_back(2);
-	g_indices.push_back(1);
-	g_indices.push_back(5);
+	g_vertices.push_back( vertices[ 2] );
+	g_vertices.push_back( vertices[ 1] );
+	g_vertices.push_back( vertices[ 5] );
+	g_vertices.push_back( vertices[ 6] );
+
 	// bottom
-	g_indices.push_back(4);
-	g_indices.push_back(7);
-	g_indices.push_back(6);
-	g_indices.push_back(4);
-	g_indices.push_back(6);
-	g_indices.push_back(5);
+	g_vertices.push_back( vertices[ 6] );
+	g_vertices.push_back( vertices[ 5] );
+	g_vertices.push_back( vertices[ 4] );
+	g_vertices.push_back( vertices[ 7] );
+
+	g_normals.resize(g_vertices.size());
+
+
+	g_indices.reserve(128);
+	for (int i=0; i < 6; ++i)
+	{
+		g_indices.push_back(0 + (i*4));
+		g_indices.push_back(2 + (i*4));
+		g_indices.push_back(3 + (i*4));
+		g_indices.push_back(0 + (i*4));
+		g_indices.push_back(1 + (i*4));
+		g_indices.push_back(2 + (i*4));
+	}
+
+	ComputeNormals(g_vertices, g_indices, g_normals);
 
 
 	g_matWorld.SetIdentity();
@@ -356,6 +370,61 @@ void	Render(HWND hWnd)
 	::ReleaseDC(hWnd, hdc);
 }
 
+/**
+ @brief 
+ @date 2014-04-07
+*/
+void ComputeNormals(const vector<Vector3> &vertices, const vector<int> &indices, vector<Vector3> &normals)
+{
+	for (unsigned int i=0; i < indices.size(); i+=3)
+	{
+		Vector3 p1 = vertices[ indices[ i]];
+		Vector3 p2 = vertices[ indices[ i+1]];
+		Vector3 p3 = vertices[ indices[ i+2]];
+
+		Vector3 v1 = p2 - p1;
+		Vector3 v2 = p3 - p1;
+		v1.Normalize();
+		v2.Normalize();
+		Vector3 n = v1.CrossProduct(v2);
+		n.Normalize();
+
+		normals[ indices[ i]] = n;
+		normals[ indices[ i+1]] = n;
+		normals[ indices[ i+2]] = n;
+	}
+}
+
+
+/**
+ @brief 
+ @date 2014-04-07
+*/
+void GroudShading(vector<Vector3> &vertices, const vector<int> &indices, vector<Vector3> &normals)
+{
+
+	for (unsigned int i=0; i < indices.size(); i+=3)
+	{
+		//Vector3 p1 = vertices[ indices[ i]];
+		//Vector3 p2 = vertices[ indices[ i+1]];
+		//Vector3 p3 = vertices[ indices[ i+2]];
+
+		//Vector3 v1 = p2 - p1;
+		//Vector3 v2 = p3 - p1;
+		//v1.Normalize();
+		//v2.Normalize();
+		//Vector3 n = v1.CrossProduct(v2);
+		//n.Normalize();
+
+		//normals[ indices[ i]] = n;
+		//normals[ indices[ i+1]] = n;
+		//normals[ indices[ i+2]] = n;
+	}
+
+
+
+}
+
 
 void RenderVertices(HDC hdc, const vector<Vector3> &vertices, const Matrix44 &tm)
 {
@@ -371,7 +440,8 @@ void RenderVertices(HDC hdc, const vector<Vector3> &vertices, const Matrix44 &tm
 	}
 }
 
-void RenderIndices(HDC hdc, const vector<Vector3> &vertices, const vector<int> &indices, const Matrix44 &tm, const Matrix44 &vpv)
+void RenderIndices(HDC hdc, const vector<Vector3> &vertices, const vector<Vector3> &normals, 
+	const vector<int> &indices, const Matrix44 &tm, const Matrix44 &vpv)
 {
 	Vector3 camDir = g_cameraLookat - g_cameraPos;
 	camDir.Normalize();
@@ -387,13 +457,15 @@ void RenderIndices(HDC hdc, const vector<Vector3> &vertices, const vector<int> &
 		p3 = p3 * tm;
 
 		// culling
-		Vector3 v1 = p2 - p1;
-		Vector3 v2 = p3 - p1;
-		v1.Normalize();
-		v2.Normalize();
-		Vector3 v3 = v1.CrossProduct(v2);
-		v3.Normalize();
-		const float dot = v3.DotProduct(camDir);
+		//Vector3 v1 = p2 - p1;
+		//Vector3 v2 = p3 - p1;
+		//v1.Normalize();
+		//v2.Normalize();
+		//Vector3 n = v1.CrossProduct(v2);
+		//n.Normalize();
+		Vector3 n = normals[ indices[ i]];
+		n = n * tm;
+		const float dot = n.DotProduct(camDir);
 		if (dot > 0.f)
 			continue;
 
@@ -401,14 +473,15 @@ void RenderIndices(HDC hdc, const vector<Vector3> &vertices, const vector<int> &
 		p2 = p2 * vpv;
 		p3 = p3 * vpv;
 
-		Vector3 n1, n2, n3;
-		Rasterizer::Color color(255,0,0,1);
-		Rasterizer::DrawTriangle(hdc, color, p1.x, p1.y, n1, color, p2.x, p2.y, n2, color, p3.x, p3.y, n3);
+		//Vector3 n = v3;
+		Rasterizer::Color color(0,255,0,1);
+		Rasterizer::DrawTriangle(hdc, color, p1.x, p1.y, n, color, p2.x, p2.y, n, color, p3.x, p3.y, n);
 	}
 }
 
 
-void RenderWire(HDC hdc, const vector<Vector3> &vertices, const vector<int> &indices, const Matrix44 &tm, const Matrix44 &vpv)
+void RenderWire(HDC hdc, const vector<Vector3> &vertices, const vector<Vector3> &normals, const vector<int> &indices, 
+	const Matrix44 &tm, const Matrix44 &vpv)
 {
 	Vector3 camDir = g_cameraLookat - g_cameraPos;
 	camDir.Normalize();
@@ -424,13 +497,9 @@ void RenderWire(HDC hdc, const vector<Vector3> &vertices, const vector<int> &ind
 		p3 = p3 * tm;
 
 		// culling
-		Vector3 v1 = p2 - p1;
-		Vector3 v2 = p3 - p1;
-		v1.Normalize();
-		v2.Normalize();
-		Vector3 v3 = v1.CrossProduct(v2);
-		v3.Normalize();
-		const float dot = v3.DotProduct(camDir);
+		Vector3 n = normals[ indices[ i]];
+		n = n * tm;
+		const float dot = n.DotProduct(camDir);
 		if (dot > 0.f)
 			continue;
 
@@ -466,9 +535,9 @@ void Paint(HWND hWnd, HDC hdc)
 
 	const Matrix44 tm = g_matLocal * g_matWorld;
 	if (g_WireFrame)
-		RenderIndices(memDc, g_vertices, g_indices, tm, vpv);
+		RenderIndices(memDc, g_vertices, g_normals, g_indices, tm, vpv);
 	else
-		RenderWire(memDc, g_vertices, g_indices, tm, vpv);
+		RenderWire(memDc, g_vertices, g_normals, g_indices, tm, vpv);
 
 	BitBlt(hdc, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, memDc, 0, 0, SRCCOPY);
 	SelectObject(memDc, hbmOld);

@@ -81,6 +81,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	g_vertices.push_back( Vector3(w,-w,-w) );
 	g_vertices.push_back( Vector3(-w,-w,-w) );
 
+	g_indices.reserve(128);
 	// top
 	g_indices.push_back(0);
 	g_indices.push_back(2);
